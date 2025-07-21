@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LSQ Steganography</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    h1, h2 { color: #1e3a8a; }
+    label { font-weight: 600; margin-top: 1rem; display: block; }
+    textarea, input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-top: 0.3rem;
+      margin-bottom: 1rem;
+      font-family: monospace;
+    }
+    .btn {
+      background-image: linear-gradient(to right, #4facfe, #00f2fe);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    .copy-btn {
+      background: linear-gradient(to right, #43e97b, #38f9d7);
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .clear-btn {
+      background: linear-gradient(to right, #f953c6, #b91d73);
+      border: none;
+      padding: 0.6rem 1.2rem;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 2rem;
+    }
+    .result-box {
+      margin-top: 1.5rem;
+      background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
+      padding: 1rem;
+      border-left: 5px solid #2563eb;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #10b981;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 999;
+    }
+    .notification.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Text Steganography using LSQ and AES</h1>
+
+    <!-- Embed Section -->
+    <h2>🔐 Embed Message</h2>
+    <form action="/embed" method="post">
+      <label>Secret Message:</label>
+      <textarea name="secret_message" id="secret_message" required>{{ request_form.secret_message if request_form else '' }}</textarea>
+
+      <label>Cover Text:</label>
+      <textarea name="cover_text" id="cover_text" required>{{ request_form.cover_text if request_form else '' }}</textarea>
+
+      <label>Password:</label>
+      <input type="password" name="password_embed" id="password_embed" value="{{ request_form.password_embed if request_form else '' }}" required>
+
+      <button type="submit" class="btn">Embed</button>
+    </form>
+
+    {% if success_message %}
+    <div class="result-box" id="stego_result">
+      <p><strong>{{ success_message }}</strong></p>
+      <textarea id="stego_text_output" readonly>{{ stego_text_result }}</textarea>
+      <button class="copy-btn" onclick="copyToClipboard('stego_text_output')">📋 Copy Stego Text</button>
+    </div>
+    {% endif %}
+
+    <hr>
+
+    <!-- Extract Section -->
+    <h2>🔎 Extract Message</h2>
+    <form action="/extract" method="post">
+      <label>Stego Text:</label>
+      <textarea name="stego_text" id="stego_text" required>{{ request_form.stego_text if request_form else '' }}</textarea>
+
+      <label>Password:</label>
+      <input type="password" name="password_extract" id="password_extract" value="{{ request_form.password_extract if request_form else '' }}" required>
+
+      <button type="submit" class="btn">Extract</button>
+    </form>
+
+    {% if extracted_message %}
+    <div class="result-box" id="extract_result">
+      <p><strong>Extracted Message:</strong></p>
+      <textarea id="extracted_text" readonly>{{ extracted_message }}</textarea>
+    </div>
+    {% endif %}
+
+    <button class="clear-btn" onclick="clearAll()">🧹 Clear All</button>
+  </div>
+
+  <div class="notification" id="notification">Stego text copied!</div>
+
+  <script>
+    function copyToClipboard(id) {
+      const el = document.getElementById(id);
+      el.select();
+      document.execCommand("copy");
+      const note = document.getElementById("notification");
+      note.classList.add("show");
+      setTimeout(() => note.classList.remove("show"), 2000);
+    }
+
+    function clearAll() {
+      ["secret_message", "cover_text", "password_embed", "stego_text", "password_extract"]
+        .forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+      ["stego_text_output", "extracted_text"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.onload = function () {
+      const scrollTarget = "{{ scroll_to or '' }}";
+      if (scrollTarget) {
+        const el = document.getElementById(scrollTarget);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+  </script>
+</body>
+</html>
